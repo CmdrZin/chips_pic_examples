@@ -55,3 +55,12 @@ void ConfigureOscillator(void) {
     /* Wait for PLL to lock */
     while(OSCCONbits.LOCK != 1);
 }
+
+void Delay_us(unsigned int delay){
+    unsigned int i;
+
+    for (i = 0; i < delay; i++){
+        __asm__ volatile ("repeat #39");
+        __asm__ volatile ("nop");
+    }
+}

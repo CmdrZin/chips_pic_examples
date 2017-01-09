@@ -18,3 +18,4 @@ go here. */
 
 void ConfigureOscillator(void); /* Handles clock switching/osc initialization */
 
+void Delay_us(unsigned int delay);  /* Cheesy delay */
