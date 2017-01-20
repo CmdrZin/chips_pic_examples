@@ -41,7 +41,8 @@ void ConfigureOscillator(void) {
     /* Disable Watch Dog Timer */
     RCONbits.SWDTEN = 0;
 
-    // Configure PLL prescaler, PLL postscaler, PLL divisor
+#if 1
+    // 70MHz..Configure PLL prescaler, PLL postscaler, PLL divisor.
     PLLFBD = 63; // M=65
     CLKDIVbits.PLLPOST = 0;     // N2=2
     CLKDIVbits.PLLPRE = 0;      // N1=3
@@ -51,9 +52,22 @@ void ConfigureOscillator(void) {
     __builtin_write_OSCCONL(OSCCON | 0x01);
     // Wait for Clock switch to occur
     while (OSCCONbits.COSC != 0b001);
+#else
+    // 40MHz..Configure PLL prescaler, PLL postscaler, PLL divisor.
+    // FRM_ADC Ex 16-3
+    PLLFBD = 41;                // M = 43 for 7.37MHz internal RC
+    CLKDIVbits.PLLPOST = 0;     // N1 = 2
+    CLKDIVbits.PLLPRE = 0;      // N2 = 2
+    OSCTUN = 0;
 
+    // Initiate Clock Switch to FRC oscillator with PLL (NOSC=0b001)
+    __builtin_write_OSCCONH(0x01);
+    __builtin_write_OSCCONL(0x01);
+    // Wait for Clock switch to occur
+    while (OSCCONbits.COSC != 0x01);
+#endif
     /* Wait for PLL to lock */
-    while(OSCCONbits.LOCK != 1);
+    while(OSCCONbits.LOCK == 0);
 }
 
 void Delay_us(unsigned int delay){
