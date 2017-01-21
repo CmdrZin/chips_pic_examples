@@ -1,3 +1,27 @@
+/*
+ * The MIT License (MIT)
+ *
+ * Copyright (c) 2016 Nels D. "Chip" Pearson (aka CmdrZin)
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in all
+ * copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ * SOFTWARE.
+ */
+
 /******************************************************************************/
 /* Files to Include                                                           */
 /******************************************************************************/
@@ -57,13 +81,23 @@ int16_t main(void) {
                 setLed(true);
             }
         } else {
+            // FOUR channel sample
+#if 0
+            // Manual sample and convert. [see also user.c:InitApp()]
             AD1CON1bits.SAMP = 1; // Start sampling
-//                setLed(true);                              // TIMING TEST
             Delay_us(1); // Wait for sampling time (1 us)
+                setLed(true);                              // TIMING TEST
             AD1CON1bits.SAMP = 0; // Start the conversion
-//                setLed(false);                              // TIMING TEST
             while (!AD1CON1bits.DONE); // Wait for the conversion to complete
+                setLed(false);                              // TIMING TEST
 //                setLed(true);                              // TIMING TEST
+#else
+            // Auto sample and convert. [see also user.c:InitApp()]
+//                setLed(false);                              // TIMING TEST
+            while (!_AD1IF);             // Wait for the all conversion to complete
+            _AD1IF = 0;                 // Clear conversion done bit.
+//                setLed(true);                              // TIMING TEST
+#endif
             ADC[0] = ADC1BUF0; // Read the ADC conversion result
             ADC[1] = ADC1BUF1; // Read the ADC conversion result
             ADC[2] = ADC1BUF2; // Read the ADC conversion result
