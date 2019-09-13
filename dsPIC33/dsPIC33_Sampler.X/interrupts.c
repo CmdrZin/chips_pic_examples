@@ -122,5 +122,37 @@
 /******************************************************************************/
 /* Interrupt Routines                                                         */
 /******************************************************************************/
+/* Device header file */
+#if defined(__XC16__)
+#include <xc.h>
+#elif defined(__C30__)
+#if defined(__dsPIC33E__)
+#include <p33Exxxx.h>
+#elif defined(__dsPIC33F__)
+#include <p33Fxxxx.h>
+#endif
+#endif
+
+extern volatile char ADC[2048];    // ADC 10 bit data. Modified in interrupt.
+extern volatile int adcCount;      // FULL if => 2047. Use as index into ADC.
+
 
 /* TODO Add interrupt routine code here. */
+void __attribute__((interrupt,auto_psv)) _AD1Interrupt(void) {
+#if 0
+    ADC[0] = ADC1BUF0; // Read the ADC conversion result
+    ADC[1] = ADC1BUF1; // Read the ADC conversion result
+    ADC[2] = ADC1BUF2; // Read the ADC conversion result
+    ADC[3] = ADC1BUF3; // Read the ADC conversion result
+#else
+    // Transfer to a 2048 byte buffer. main() has to reset adcCount when FULL.
+    if(adcCount < sizeof(ADC)) {
+        ADC[adcCount++] = ADC1BUF0; // Read the ADC conversion result
+        ADC[adcCount++] = ADC1BUF1; // Read the ADC conversion result
+        ADC[adcCount++] = ADC1BUF2; // Read the ADC conversion result
+        ADC[adcCount++] = ADC1BUF3; // Read the ADC conversion result
+    }
+#endif
+    IFS0bits.AD1IF = 0;  //After conversion, ADxIF is set to 1 and must be cleared.
+
+}

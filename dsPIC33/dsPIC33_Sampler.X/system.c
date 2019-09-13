@@ -43,10 +43,15 @@
 
 #include "system.h"          /* variables/params used by system.c             */
 
+#define FP 60000000         // 60 MHz clk
+//#define BAUDRATE 9600       // up to 115200
+#define BAUDRATE 115200
+#define BRGVAL ((FP/BAUDRATE)/16)-1
+
 /******************************************************************************/
 /* System Level Functions                                                     */
 /*                                                                            */
-/* Custom oscillator configuration funtions, reset source evaluation          */
+/* Custom oscillator configuration functions, reset source evaluation          */
 /* functions, and other non-peripheral microcontroller initialization         */
 /* functions get placed in system.c.                                          */
 /*                                                                            */
@@ -55,7 +60,7 @@
 /* Refer to the device Family Reference Manual Oscillator section for
 information about available oscillator configurations.  Typically
 this would involve configuring the oscillator tuning register or clock
-switching useing the compiler's __builtin_write_OSCCON functions.
+switching using the compiler's __builtin_write_OSCCON functions.
 Refer to the C Compiler for PIC24 MCUs and dsPIC DSCs User Guide in the
 compiler installation directory /doc folder for documentation on the
 __builtin functions.*/
@@ -66,7 +71,7 @@ void ConfigureOscillator(void) {
     RCONbits.SWDTEN = 0;
 
 #if 1
-    // 60MHz..Configure PLL prescaler, PLL postscaler, PLL divisor.
+    // 60MHz..Configure PLL pre-scaler, PLL post-scaler, PLL divisor.
     // For 70 MHz, use M=76
     PLLFBD = 63; // M=65
     CLKDIVbits.PLLPRE = 0;      // N1=3
@@ -78,7 +83,7 @@ void ConfigureOscillator(void) {
     // Wait for Clock switch to occur
     while (OSCCONbits.COSC != 0b001);
 #else
-    // 40MHz..Configure PLL prescaler, PLL postscaler, PLL divisor.
+    // 40MHz..Configure PLL pre-scaler, PLL post-scaler, PLL divisor.
     PLLFBD = 63;                // M = 65 for 7.37MHz internal RC
     CLKDIVbits.PLLPRE = 1;      // N1 = 3
     CLKDIVbits.PLLPOST = 0;     // N2 = 2
@@ -94,11 +99,60 @@ void ConfigureOscillator(void) {
     while(OSCCONbits.LOCK == 0);
 }
 
+/*
+ * Configure UART (CPUclk = 60 MHz)
+ * Use PPS system to map UART to I/O pins
+ */
+void ConfigureUART(void)
+{
+    //*************************************************************
+    // Unlock Registers
+    //*************************************************************
+    __builtin_write_OSCCONL(OSCCON & ~(1<<6));
+
+//    RPINR18bits.U1RXR = 0b00101011;     // map U1RXR to RB11.RP43
+    RPINR18 = 0b00101011;     // map U1RXR to RB11.RP43
+//    RPOR4bits.RP42R = 0b000001;          // map U1TX to RB10/RP42
+    RPOR4 = 0b000001;          // map U1TX to RB10/RP42
+
+    //*************************************************************
+    // Lock Registers
+    //*************************************************************
+    __builtin_write_OSCCONL(OSCCON | (1<<6));
+
+    // UART set up.
+    U1MODEbits.STSEL = 0;   // 1-stop bit
+    U1MODEbits.PDSEL = 0;   // No Parity, 8-data bits
+    U1MODEbits.ABAUD = 0;   // Auto-Baud disabled
+    U1MODEbits.BRGH = 0;    // Standard-Speed mode. 1=high precision???
+    
+    U1BRG = BRGVAL;         // Baud Rate setting from calc macro 9600    
+    
+    U1STAbits.URXISEL = 0;  // Interrupt after one RX char received.
+
+    U1STAbits.UTXISEL0 = 0; // Interrupt after one TX char is transmitted.
+    U1STAbits.UTXISEL1 = 0;
+
+    IEC0bits.U1TXIE = 1;    // Enable UART TX interrupt
+    
+    U1STA = 0;              // clear status
+    U1MODEbits.UARTEN = 1;  // Enable UART RX
+    U1STAbits.UTXEN = 1;    // Enable UART TX
+    
+    // Check U1STAbits.URXDA == 1 for data available. U1RXREG has data.
+    // If U1STAbits.OERR == 1, set to 0 to continue.
+    // Write to U1TXREG to send data.
+    // TX and RX buffers are 4 level FIFOs.
+}
+
+/*
+ * N us delay loop.
+ */
 void Delay_us(unsigned int delay){
     unsigned int i;
 
     for (i = 0; i < delay; i++){
-        __asm__ volatile ("repeat #39");
+        __asm__ volatile ("repeat #59");
         __asm__ volatile ("nop");
     }
 }

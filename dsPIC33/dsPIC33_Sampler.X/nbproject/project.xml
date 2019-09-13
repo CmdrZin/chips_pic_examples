@@ -1,4 +1,5 @@
-<?xml version="1.0" encoding="UTF-8"?><project xmlns="http://www.netbeans.org/ns/project/1">
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://www.netbeans.org/ns/project/1">
     <type>com.microchip.mplab.nbide.embedded.makeproject</type>
     <configuration>
         <data xmlns="http://www.netbeans.org/ns/make-project/1">
@@ -11,6 +12,58 @@
             <sourceEncoding>ISO-8859-1</sourceEncoding>
             <asminc-extensions/>
             <make-dep-projects/>
+            <sourceRootList>
+                <sourceRootElem>.</sourceRootElem>
+            </sourceRootList>
+            <confList>
+                <confElem>
+                    <name>C30_dsPIC33FJ256GP710A</name>
+                    <type>2</type>
+                </confElem>
+                <confElem>
+                    <name>XC16_dsPIC33FJ256GP710A</name>
+                    <type>2</type>
+                </confElem>
+                <confElem>
+                    <name>C30_dsPIC33FJ128MC804</name>
+                    <type>2</type>
+                </confElem>
+                <confElem>
+                    <name>XC16_dsPIC33FJ128MC804</name>
+                    <type>2</type>
+                </confElem>
+                <confElem>
+                    <name>C30_dsPIC33FJ16GS504</name>
+                    <type>2</type>
+                </confElem>
+                <confElem>
+                    <name>XC16_dsPIC33FJ16GS504</name>
+                    <type>2</type>
+                </confElem>
+                <confElem>
+                    <name>C30_dsPIC33FJ06GS101</name>
+                    <type>2</type>
+                </confElem>
+                <confElem>
+                    <name>XC16_dsPIC33FJ06GS101</name>
+                    <type>2</type>
+                </confElem>
+                <confElem>
+                    <name>C30_dsPIC33EP512MU810</name>
+                    <type>2</type>
+                </confElem>
+                <confElem>
+                    <name>XC16_dsPIC33EP512MU810</name>
+                    <type>2</type>
+                </confElem>
+                <confElem>
+                    <name>XC16_dsPIC33EP32MC202</name>
+                    <type>2</type>
+                </confElem>
+            </confList>
+            <formatting>
+                <project-formatting-style>false</project-formatting-style>
+            </formatting>
         </data>
     </configuration>
 </project>

@@ -1,7 +1,7 @@
 /*
  * The MIT License (MIT)
  *
- * Copyright (c) 2016 Nels D. "Chip" Pearson (aka CmdrZin)
+ * Copyright (c) 2017 Nels D. "Chip" Pearson (aka CmdrZin)
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -20,26 +20,27 @@
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
+ * 
+ * File:   serial.h
+ * Author: Chip
+ *
+ * Created on September 2, 2017, 9:53 PM
  */
 
-/******************************************************************************/
-/* System Level #define Macros                                                */
-/******************************************************************************/
+#ifndef SERIAL_H
+#define	SERIAL_H
 
-/* Microcontroller MIPs (FCY) */
-#define SYS_FREQ        7370000L
-#define FCY             SYS_FREQ/2
+#ifdef	__cplusplus
+extern "C" {
+#endif
 
-/******************************************************************************/
-/* System Function Prototypes                                                 */
-/******************************************************************************/
+void writeChar(char val);    
+void writeBuff(char *buff, int val);
 
-/* Custom oscillator configuration functions, reset source evaluation
- * functions, and other non-peripheral microcontroller initialization functions
- * go here.
- */
 
-void ConfigureOscillator(void); /* Handles clock switching/osc initialization */
-void ConfigureUART(void);       // UART setup
+#ifdef	__cplusplus
+}
+#endif
 
-void Delay_us(unsigned int delay);  /* Cheesy delay */
+#endif	/* SERIAL_H */
+

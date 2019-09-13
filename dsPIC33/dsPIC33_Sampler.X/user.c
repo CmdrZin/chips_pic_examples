@@ -40,7 +40,7 @@
 #include <stdint.h>          /* For uint16_t definition                       */
 #include <stdbool.h>         /* For true/false definition                     */
 #include "user.h"            /* variables/params used by user.c               */
-#include "system.h"         // access Dleay_us()
+#include "system.h"         // access Delay_us()
 
 /******************************************************************************/
 /* User Functions                                                             */
@@ -50,7 +50,7 @@
 
 void InitApp(USER_ADC_CONF config) {
     /* TODO Initialize User Ports/Peripherals/Project here */
-    TRISB = 0xFFEF; // RB4 as output
+    TRISB = 0xBFEF;         // RB14,RB4 as output for LED D4.
 
     /* Setup analog functionality and port direction */
     //AN PortB as digital I/O
@@ -60,7 +60,6 @@ void InitApp(USER_ADC_CONF config) {
 
     if (config == USER_ONE_CHAN) {
         /* see also dsPIC33_FRM_ADC Section 16 Example 16-1 code. Example based on Fosc = 80MHz */
-        /* Set port configuration */
         ANSELA = ANSELB = 0x0000;
         ANSELAbits.ANSA0 = 1; // Ensure AN0/RA0 is analog
 
@@ -77,8 +76,9 @@ void InitApp(USER_ADC_CONF config) {
     } else {
         // Set up for Four Channels
         /* see also dsPIC33_FRM_ADC Section 16 Example 16-1 code. Example based on Fosc = 80MHz */
-        /* Set port configuration */
-        ANSELA = ANSELB = 0x0000;
+        /* dsOUC33xxx.pdf ref 11.2 mentions ANSELx register. Defined in s10.pdf dsPIC33_FRM_IO.pdf Sec 10.8.*/
+        /* Set port configuration. Using PORTA and PORTB. i.e ANSELx = ANSELA */
+        ANSELA = ANSELB = 0x0000;           // set all PORTA & PORTB bits to DIGITAL.
         ANSELAbits.ANSA0 = 1; // Ensure AN0/RA0 is analog
         ANSELAbits.ANSA1 = 1; // Ensure AN1/RA1 is analog
         ANSELBbits.ANSB0 = 1; // Ensure AN2/RB0 is analog
@@ -100,7 +100,8 @@ void InitApp(USER_ADC_CONF config) {
         // Auto sample and convert
         AD1CON1 = 0x00EC; // ADON:OFF, ADSIDL:Cont, ADDMABM:DMA Scat/Gat, AD12B:10bit, FORM:UINT_RJ,
         // SSRC:AUTO, SSRCG:0, SIMSAM:Simul, ASAM:OnConv, SAMP:HOLD, DONE:status
-        AD1CON2 = 0x0300; // VCFG:AVdd:AVss, CSCNA:OFF, CHPS:CH0-3, BUFS:status, SMPI:Int on done., BUFM:TOP, ALTS:MUXA
+//        AD1CON2 = 0x0300; // VCFG:AVdd:AVss, CSCNA:OFF, CHPS:CH0-3, BUFS:status, SMPI:Int on done., BUFM:TOP, ALTS:MUXA
+        AD1CON2 = 0x030C; // VCFG:AVdd:AVss, CSCNA:OFF, CHPS:CH0-3, BUFS:status, SMPI:N-1(3), BUFM:TOP, ALTS:MUXA
         AD1CON3 = 0x0305; // ADRC:SYSCLK, SAMC:Tad=3, ADCS:Tp*5
         AD1CON4 = 0x0000; // ADDMAEN:OFF, DMABL:1per
         AD1CHS123 = 0x0000; // CH123NB:VrefL, CH123SB:OA2/AN0.AN1.AN2, CH123NA:VrefL, CH123SA:OA2/AN0.AN1.AN2
@@ -110,7 +111,12 @@ void InitApp(USER_ADC_CONF config) {
 #endif
 
     }
-    AD1CON1bits.ADON = 1;
+    // Set up Interrupt
+    IFS0bits.AD1IF = 0;     // reset interrupt flag if set.
+    IPC3bits.AD1IP = 7;     // set interrupt priority to highest.
+    IEC0bits.AD1IE = 1;     // enable ADC interrupts. 
+    
+    AD1CON1bits.ADON = 1;   // turn ON ADC.
     Delay_us(20);
 }
 
