@@ -45,7 +45,7 @@
 #include "system.h"        /* System funct/params, like osc/peripheral config */
 #include "user.h"          /* User funct/params, such as InitApp              */
 #include "serial.h"        // Serial support
-
+#include "audio.h"         // audio support.
 void test001();
 void test002(USER_ADC_CONF conf);
 
@@ -73,6 +73,7 @@ int16_t main(void) {
     /* Initialize IO ports and peripherals */
     InitApp(conf);          // ADC system
     ConfigureUART();        // UART
+    ConfigurePWM();         // PWM
 
     INTCON2bits.GIE = 1;        // Enable Interrupts
 //    INTCON2bits.GIE = 0;        // Disable Interrupts
@@ -89,12 +90,14 @@ int16_t main(void) {
 void test002(USER_ADC_CONF conf)
 {
     char strOut[32];
-    bool tog = false;
+//    bool tog = false;
     int strLen;
 
     AD1CON1bits.SAMP = 1; // Start sampling
     IFS0bits.AD1IF = 0;  //After conversion, ADxIF is set to 1 and must be cleared.
 
+    initAudioDDS();
+    
 //    strLen = sprintf(strOut, "Start\n");
     strLen = sprintf(strOut, "Format: Ch0 Ch1 Ch2 Ch3\n");
     writeBuff(strOut, strLen);
@@ -136,6 +139,15 @@ void test002(USER_ADC_CONF conf)
                 strLen = sprintf(strOut, "%02x %02x %02x %02x \n", (uint8_t)ADC[0],(uint8_t)ADC[1],(uint8_t)ADC[2],(uint8_t)ADC[3]);
                 writeBuff(strOut, strLen);
                 adcCount = 0;
+
+                // Time sample rate.
+                // 5us -> 200KHz per channel x4 channels -> 800KHz total rate.
+//                if (tog) {
+//                    setLed(true);
+//                } else {
+//                    setLed(false);
+//                }
+//                tog = !tog;
               }
 
 #endif
@@ -153,14 +165,6 @@ void test002(USER_ADC_CONF conf)
 //                setLed(true);
 //            }
 
-            // Time sample rate.
-            // 5us -> 200KHz per channel x4 channels -> 800KHz total rate.
-            if(tog) {
-                setLed(true);
-            } else {
-                setLed(false);
-            }
-            tog = !tog;
         }
 //                setLed(false);                              // TIMING TEST
     }

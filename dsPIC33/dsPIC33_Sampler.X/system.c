@@ -144,6 +144,42 @@ void ConfigureUART(void)
     // Write to U1TXREG to send data.
     // TX and RX buffers are 4 level FIFOs.
 }
+/*
+ * Configure PWM Ch1 (CPUclk = 60 MHz)
+ */
+void ConfigurePWM(void) {
+    //*************************************************************
+    // Unlock Registers
+    //*************************************************************
+    __builtin_write_OSCCONL(OSCCON & ~(1<<6));
+
+    IOCON1 = 0xCC00;        // PWM Mode to Independent
+    FCLCON1 = 0x0003;       // Configure Faults
+
+    //*************************************************************
+    // Lock Registers
+    //*************************************************************
+    __builtin_write_OSCCONL(OSCCON | (1<<6));
+
+    PHASE1 = 2048; // period  600000 = 2kHz, 12000 = 10kHz.
+    PDC1 = 1024; // 50% duty cycle
+    DTR1 = 0; // Dead time
+    ALTDTR1 = 0;
+    PWMCON1 = 0x0200; // Ind time base, edge-align, independent duty cycle
+    PTCON2 = 0x0000; // 1:1 pre-scaler
+
+    // Set up trigger compare for interrupt on period.
+  	TRIG1 = 0x0010;
+	PWMCON1bits.TRGIEN = 1;
+    TRGCON1 = 0x0000;                   // no delay
+    IFS5bits.PWM1IF = 0;        // enable by resetting interrupt flag
+    IEC5bits.PWM1IE = 1;
+    IPC23bits.PWM1IP = 0b001; //interrupt priority level 0 .
+  	PTCONbits.SEIEN = 1;
+    
+    
+    PTCON = 0x8000; // Enable PWM Mode
+}
 
 /*
  * N us delay loop.

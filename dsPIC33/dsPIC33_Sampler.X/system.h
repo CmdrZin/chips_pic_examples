@@ -41,5 +41,6 @@
 
 void ConfigureOscillator(void); /* Handles clock switching/osc initialization */
 void ConfigureUART(void);       // UART setup
+void ConfigurePWM(void);        // PWM configuration.
 
 void Delay_us(unsigned int delay);  /* Cheesy delay */

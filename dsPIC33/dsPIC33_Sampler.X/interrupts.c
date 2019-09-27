@@ -133,11 +133,13 @@
 #endif
 #endif
 
+#include "user.h"          /* User funct/params, such as InitApp              */
+
 extern volatile char ADC[2048];    // ADC 10 bit data. Modified in interrupt.
 extern volatile int adcCount;      // FULL if => 2047. Use as index into ADC.
 
 
-/* TODO Add interrupt routine code here. */
+/* Add interrupt routine code here. */
 void __attribute__((interrupt,auto_psv)) _AD1Interrupt(void) {
 #if 0
     ADC[0] = ADC1BUF0; // Read the ADC conversion result
@@ -154,5 +156,4 @@ void __attribute__((interrupt,auto_psv)) _AD1Interrupt(void) {
     }
 #endif
     IFS0bits.AD1IF = 0;  //After conversion, ADxIF is set to 1 and must be cleared.
-
 }
