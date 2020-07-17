@@ -1,9 +1,9 @@
 {\rtf1\ansi\ansicpg1252\deff0\nouicompat{\fonttbl{\f0\fnil\fcharset0 Calibri;}{\f1\fnil\fcharset0 Courier New;}}
 {\colortbl ;\red0\green0\blue255;}
-{\*\generator Riched20 10.0.18362}\viewkind4\uc1 
+{\*\generator Riched20 10.0.19041}\viewkind4\uc1 
 \pard\sl240\slmult1\f0\fs22\lang9 LN_dsPIC33_Sampler.rtf\par
 06jan17 ndp\par
-19sep19\par
+15jul20\par
 \par
 Log Notes for dsPIC33 High Speed Sampler\par
 \par
@@ -143,7 +143,29 @@ Test..185.2Hz..close..try 1800 accumStep ..=161.3Hz..try 1600..=142.8..1620..=14
 610 -> 55.5 Hz..ok.\par
 20sep19\par
 Change R7 to 1k. Better. Added Tune code..add pause to notes..ok, working..\par
+24sep19\par
+Add envelope code..scaling problems..add P_IDLE state to end envelope, going back to P_ATTACK caused /0 error \par
+due to counter at 0..fixed..steps have to equal 100% of duration or clicks are generated..working now.\par
+28jun20\par
+BUG: Four channel data is invalid.\par
+Have interrupt place incrementing count as data into buffer to test transfer...works correctly..00 01 02 03..\par
+So, ADC measured values have a problem..review manual Ch 16..system noise at about 200kHz..minor adjustments \par
+to code..seems to work now.\par
+15jul20\par
+OpAmps clip at 2v. DC Bias is at 1.615v. Reduce signal. Audio still works. Snashot to SVN rev 340.\par
 \par
+15jul20\par
+Project rev 341. \par
+Modify dsPIC + Processing3 O-display to show serial data.\par
+1. Change serial format to add sync 0xAA 0x55 before data. Change data to be 16 bit.\par
+New format: AA 55 Ch0H Ch0L Ch1H Ch1L Ch2H Ch2L Ch3H Ch3L 0A\tab 11 bytes with '\\n' terminator.\par
+Dump entire buffer every 2k samples.\par
+Add a zero, F8 to 08, crossing trigger to start collection.\par
+\par
+\par
+\par
+2. Copy ..\\Software\\Processing3\\OScope code to ..\\Processing3\\OScope4Ch and add in code from SerialTest002 then \par
+modify to accept new format.\par
 \par
 \par
 }

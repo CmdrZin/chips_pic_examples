@@ -73,13 +73,14 @@ extern "C" {
 #define MA_1000		(64*256)		// 1kHz
 // (128*256)-1 is max value (2kHz) for a Note
 
-#define NOTE_HALF       0xFFFF
-#define NOTE_QUARTER    36764               // 0.5 sec
+#define NOTE_HALF       0x8000
+#define NOTE_QUARTER    0x4000              // 0.5 sec
 #define NOTE_EIGHT_DOT  ((NOTE_QUARTER>>1)+(NOTE_QUARTER>>2))   // 0.375 sec
 #define NOTE_EIGHT      (NOTE_QUARTER>>1)   // 0.25 sec
 #define NOTE_SIXTEENTH  (NOTE_QUARTER>>2)   // 0.125 sec
     
 int initAudioDDS(void);         // initialize PWM Audio parmateres.
+void initEnvelope(uint16_t sustain); // initialize wave Envelope.
 
 #ifdef	__cplusplus
 }

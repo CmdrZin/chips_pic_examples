@@ -14,15 +14,14 @@
  *
  * All time is in iso format: 2017-03-25 14:54:23
  */
+ 
 
 import processing.serial.*;
-
-final int MAX_IN_CHAR = 48;
 
 color bgcolor;			     // Background color
 color fgcolor;			     // Fill color
 Serial myPort;                       // The serial port
-char[] serialInArray = new char[MAX_IN_CHAR];    // Where we'll put what we receive
+char[] serialInArray = new char[48];    // Where we'll put what we receive
 int serialCount = 0;                 // A count of how many bytes we receive
 
 int tMills;
@@ -39,7 +38,7 @@ String[] eventList = new String[64];
 
 void setup() {
   size(600, 900);    // Stage size
-  //  noStroke();      // No border on the next thing drawn
+//  noStroke();      // No border on the next thing drawn
   bgcolor = color(50, 50, 50);
   fgcolor = color(255, 255, 255);
 
@@ -51,13 +50,11 @@ void setup() {
   // On Windows machines, this generally opens COM1.
   // Open whatever port is the one you're using.
   // Use [1] for Windows 10, [0] for Windows 7 it seems.
-  String portName = Serial.list()[0];   // use for Saturn (win7 conv to Win10)
-//  String portName = Serial.list()[1];    // use for Jupiter
-  //  myPort = new Serial(this, portName, 9600);
-  myPort = new Serial(this, portName, 115200);
-
+  String portName = Serial.list()[0];
+  myPort = new Serial(this, portName, 9600);
+  
   tMills = millis() + 1000;
-
+  
   mono = createFont("Arial", 12);
   textSize(12);
 
@@ -73,77 +70,79 @@ void setup() {
   eventList[8] = new String("L" + (char)8 + "2017-05-12 16:00:04");
   eventList[9] = new String("L" + (char)9 + "2017-05-12 21:00:05");
 
-  for (int i=10; i<64; i++) {
+  for(int i=10; i<64; i++) {
     eventList[i] = new String("L" + (char)i + "2017-06-11 12:34:56");
   }
+  
 };
 
 
 void draw() {
   background(bgcolor);
   fill(fgcolor);
-
+  
   // Update text box
-  for (int i=0; i<64; i++) {
-    if (eListBox[i] != null) {
+  for(int i=0; i<64; i++) {
+    if(eListBox[i] != null) {
       text(eListBox[i], 10, (i*13)+13, 350, (i*26)+26);
     }
   }
   // Trigger COMM
-  if (keyPressed && !kFlag) {
+  if(keyPressed && !kFlag) {
     kFlag = true;
     switch(key) {
-    case 'c':
-      myPort.write('C');
-      eListBoxCount = 0;
-      break;
+      case 'c':
+        myPort.write('C');
+        eListBoxCount = 0;
+        break;
+        
+      case 'd':
+        myPort.write('D');
+        eListBoxCount = 0;
+        break;
+        
+      case 'e':
+        myPort.write('E');
+        eListBoxCount = 0;
+        break;
+        
+      case 'l':
+//        myPort.write("L"+ eTic + "2017-03-11 19:0" + (char)('0'+eTic++) + ":00");
+        for(int i=0; i<64; i++)
+        {
+           myPort.write(eventList[i]);
+           // Delay for O K LF CR response.
+           delay(100);
+        }
+        break;
+        
+      case 'r':
+        myPort.write('R');
+        eListBoxCount = 0;
+        break;
+        
+      case 's':
+        myPort.write("S2017-05-07 20:35:00");
+        break;
+        
+      case 't':
+        myPort.write('T');
+        break;
 
-    case 'd':
-      myPort.write('D');
-      eListBoxCount = 0;
-      break;
-
-    case 'e':
-      myPort.write('E');
-      eListBoxCount = 0;
-      break;
-
-    case 'l':
-      //        myPort.write("L"+ eTic + "2017-03-11 19:0" + (char)('0'+eTic++) + ":00");
-      for (int i=0; i<64; i++)
-      {
-        myPort.write(eventList[i]);
-        // Delay for O K LF CR response.
-        delay(100);
-      }
-      break;
-
-    case 'r':
-      myPort.write('R');
-      eListBoxCount = 0;
-      break;
-
-    case 's':
-      myPort.write("S2017-05-07 20:35:00");
-      break;
-
-    case 't':
-      myPort.write('T');
-      break;
-
-    case 'v':
-      myPort.write('V');
-      break;
-
-    default:
-      break;
+      case 'v':
+        myPort.write('V');
+        break;
+        
+      default:
+        break;
     }
   }
 
   // Display Local Time
-  if (lTimeBox != null) {
+  if(lTimeBox != null) {
     text(lTimeBox, 400, 13, 590, 26);
   }
+
 }
 
 // Needed to block key repeates.
@@ -158,28 +157,18 @@ void keyReleased()
 void serialEvent(Serial myPort) {
   // read a byte from the serial port:
   char inByte = (char)myPort.read();
-  // Add the latest byte from the serial port to array:
-  if( serialCount < MAX_IN_CHAR ) {
-    serialInArray[serialCount] = inByte;
-    serialCount++;
-  } else {
-    // Force termination.
-    inByte = '\n';
-  }
 
-  if (inByte == '\n') {
-    String sOut = new String(subset(serialInArray, 0, serialCount-1));   // strip \n
-    // print the last value (for debugging purposes only):
-    println(hex(inByte));
-    eListBox[eListBoxCount] = sOut;
-    if (++eListBoxCount > 63) {
-      eListBoxCount = 0;
 
-      // TEST
-      lTimeBox = sOut;
-    }
+      String sOut = new String("f");
+      // print the values (for debugging purposes only):
+      println(hex(inByte));
+      eListBox[eListBoxCount] = sOut;
+      if(++eListBoxCount > 63) {
+        eListBoxCount = 0;
+        
+        // TEST
+        lTimeBox = sOut;
+        
+      }
 
-    // Reset serialCount:
-    serialCount = 0;
-  }
 }

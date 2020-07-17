@@ -96,7 +96,7 @@ void test002(USER_ADC_CONF conf)
     AD1CON1bits.SAMP = 1; // Start sampling
     IFS0bits.AD1IF = 0;  //After conversion, ADxIF is set to 1 and must be cleared.
 
-    initAudioDDS();
+    initAudioDDS();     // Play preset tune once. (see audio.c)
     
 //    strLen = sprintf(strOut, "Start\n");
     strLen = sprintf(strOut, "Format: Ch0 Ch1 Ch2 Ch3\n");

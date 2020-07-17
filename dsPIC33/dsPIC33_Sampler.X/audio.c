@@ -53,6 +53,18 @@ typedef struct tuneTable {
   TT_ENTRY notes[];
 } TUNE_TABLE;
 
+typedef enum { P_ATTACK, P_DECAY, P_SUSTAIN, P_RELEASE, P_IDLE } PHASE_STEP;
+
+/* Globals */
+uint16_t attackSteps;
+uint16_t decaySteps;
+uint16_t sustainSteps;
+uint16_t releaseSteps;
+uint16_t amplitudeStep;
+PHASE_STEP phaseStep;
+uint16_t phaseGain;
+uint32_t phaseGainAccum;
+
 static volatile uint16_t pwmDuty = 0;       // PWM duty % of 2048 period.
 static volatile uint16_t duration = 0;      // total phase samples
 static volatile uint16_t indexAccum = 0;    // large index tracker.
@@ -78,6 +90,23 @@ const TUNE_TABLE tune01 = {
     { MA_C3, NOTE_EIGHT_DOT },
     { MA_D3, NOTE_SIXTEENTH },
     { MA_E3, NOTE_HALF }
+  }
+};
+
+const TUNE_TABLE tune02 = {
+  11,
+  {
+    { MA_E4, NOTE_EIGHT },
+    { MA_E4, NOTE_EIGHT },
+    { MA_E4, NOTE_QUARTER },
+    { MA_E4, NOTE_EIGHT },
+    { MA_E4, NOTE_EIGHT },
+    { MA_E4, NOTE_QUARTER },
+    { MA_E4, NOTE_EIGHT },
+    { MA_G4, NOTE_EIGHT },
+    { MA_C4, NOTE_EIGHT_DOT },
+    { MA_D4, NOTE_SIXTEENTH },
+    { MA_E4, NOTE_HALF }
   }
 };
 
@@ -121,26 +150,159 @@ const int sinTable448[] = {
 	-43, -40, -38, -35, -33, -30, -27, -25, -22, -19, -16, -14, -11,  -8,  -5, -3
 };
 
-
 int initAudioDDS(void) {
-    playTable = &tune01;
+    playTable = &tune02;
     tuneNotes = playTable->numEntries;
     tuneIndex = 0;
     indexAccum = 0;
     accumStep = playTable->notes[tuneIndex].note;
     duration = playTable->notes[tuneIndex].duration;
     pause = false;
-    
+
+    initEnvelope(duration);
+    ++tuneIndex;
     pwmDuty = 0 + 1024;             // initialize and add offset
+    
+    PTCON = 0x8000; // Enable PWM Mode
+   
     return 0;
+}
+
+
+/* set time (in sample steps) of each phase of the envelope.
+ * Percentage of tone duration for each phase.
+ *   Attack    10%
+ *   Decay     10%
+ *   Sustain   70%
+ *   Release   10%
+ */
+void initEnvelope(uint16_t duration) {
+#if 1
+  attackSteps = duration / 5;
+  decaySteps = duration / 10;
+  releaseSteps = duration / 5;
+  sustainSteps = duration - attackSteps - decaySteps - releaseSteps;
+#else
+  attackSteps = sustain / 5;
+  decaySteps = sustain / 10;
+  sustainSteps = sustain / 2;
+  releaseSteps = sustain / 5;
+#endif
+  phaseStep = P_ATTACK;
+  amplitudeStep = (255<<8) / attackSteps;       // 16 bit fractional 8:8.
+  phaseGain = 0;
+  phaseGainAccum = 0;
+  
+  // DEBUG
+//  setLed(true);
+}
+
+/* Called each sample.
+ * Self tracking ADSR envelope.
+ */
+uint16_t getEnvelope() {
+	// --attackSteps to 0 while increasing attackAmplitude from 0 to 255
+    switch (phaseStep) {
+        case P_ATTACK:
+            if( attackSteps > 0 ) {
+                --attackSteps;
+                phaseGainAccum += amplitudeStep;
+                phaseGain = (uint16_t)(phaseGainAccum);
+            } else {
+  // DEBUG
+//  setLed(false);
+                phaseStep = P_DECAY;
+                amplitudeStep = (55<<8) / decaySteps;
+            }
+            break;
+            
+        case P_DECAY:
+            if( decaySteps > 0 ) {
+                --decaySteps;
+                phaseGainAccum -= amplitudeStep;
+                phaseGain = (uint16_t)(phaseGainAccum);
+            } else {
+  // DEBUG
+//  setLed(true);
+                phaseStep = P_SUSTAIN;
+                amplitudeStep = 0;  // amplitude maintained during sustain phase.
+            }
+            break;
+            
+        case P_SUSTAIN:
+            if( sustainSteps > 0 ) {
+                --sustainSteps;
+                // could do vibrato here. No modulation for now.
+            } else {
+  // DEBUG
+//  setLed(false);
+                phaseStep = P_RELEASE;
+                amplitudeStep = (200<<8) / releaseSteps;
+            }
+            break;
+            
+        case P_RELEASE:
+            if( releaseSteps > 0 ) {
+                --releaseSteps;
+                phaseGainAccum -= amplitudeStep;
+                phaseGain = (uint16_t)(phaseGainAccum);
+            } else {
+                phaseStep = P_IDLE;
+                amplitudeStep = 0;  // no more modulation.
+            }
+            break;
+            
+        case P_IDLE:
+            break;
+            
+        default:
+            phaseStep = P_IDLE;
+            break;
+    }
+    
+//    phaseGain = 0xF000;
+    return phaseGain;
 }
 
 void __attribute__((__interrupt__, no_auto_psv)) _PWM1Interrupt(void) {
     uint16_t index;
-    static bool pause = false;
-
+//    static bool pause = false;
+    long w;
+    long g;
+    
     PDC1 = pwmDuty; // from last look up
 
+#if 1
+    // Use ADSR envelope for each note.
+        if (duration > 0) {
+            --duration; // track the number of samples to go.
+            indexAccum += accumStep; // advance phase index.
+            index = indexAccum >> 8; // convert to table size index.
+            // Adjust by envelope.
+#if 0
+            pwmDuty = (long)((sinTable448[index] << 3) + 1024); // generate new duty %. 8bit to 11bit for testing.
+#else
+            w = (sinTable448[index] << 3); // generate new duty %. 8bit to 11bit for testing.
+            g = getEnvelope() * w;
+            pwmDuty = (int)(g >> 16) + 1024;
+#endif
+        } else {
+            // get next note.
+            if (tuneIndex < tuneNotes) {
+                accumStep = playTable->notes[tuneIndex].note;
+                duration = playTable->notes[tuneIndex].duration;
+                indexAccum = 0;
+                pwmDuty = 0 + 1024;
+                initEnvelope(duration);
+                ++tuneIndex;
+            } else {
+                // all done. Could also disable PWM here.
+                pwmDuty = 0;
+                PTCON = 0x0000; // Disable PWM Mode
+            }
+        }
+#else
+    // Simple pause between notes.
     if (pause) {
         if (duration > 0) {
             --duration; // track the number of samples to go.
@@ -173,6 +335,7 @@ void __attribute__((__interrupt__, no_auto_psv)) _PWM1Interrupt(void) {
             pause = true;
         }
     }
+#endif
 
     IFS5bits.PWM1IF = 0; // reset interrupt flag
 }

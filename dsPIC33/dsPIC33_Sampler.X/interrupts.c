@@ -149,10 +149,18 @@ void __attribute__((interrupt,auto_psv)) _AD1Interrupt(void) {
 #else
     // Transfer to a 2048 byte buffer. main() has to reset adcCount when FULL.
     if(adcCount < sizeof(ADC)) {
-        ADC[adcCount++] = ADC1BUF0; // Read the ADC conversion result
-        ADC[adcCount++] = ADC1BUF1; // Read the ADC conversion result
-        ADC[adcCount++] = ADC1BUF2; // Read the ADC conversion result
-        ADC[adcCount++] = ADC1BUF3; // Read the ADC conversion result
+#if 1
+        ADC[adcCount++] = (char)(ADC1BUF0>>2); // Read the ADC conversion result
+        ADC[adcCount++] = (char)(ADC1BUF1>>2); // Read the ADC conversion result
+        ADC[adcCount++] = (char)(ADC1BUF2>>2); // Read the ADC conversion result
+        ADC[adcCount++] = (char)(ADC1BUF3>>2); // Read the ADC conversion result
+#else
+        // Test buffer loading..should be 00 01 02 03
+        ADC[adcCount++] = adcCount; // Read the ADC conversion result
+        ADC[adcCount++] = adcCount; // Read the ADC conversion result
+        ADC[adcCount++] = adcCount; // Read the ADC conversion result
+        ADC[adcCount++] = adcCount; // Read the ADC conversion result
+#endif
     }
 #endif
     IFS0bits.AD1IF = 0;  //After conversion, ADxIF is set to 1 and must be cleared.

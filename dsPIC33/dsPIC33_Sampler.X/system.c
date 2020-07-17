@@ -166,7 +166,10 @@ void ConfigurePWM(void) {
     DTR1 = 0; // Dead time
     ALTDTR1 = 0;
     PWMCON1 = 0x0200; // Ind time base, edge-align, independent duty cycle
-    PTCON2 = 0x0000; // 1:1 pre-scaler
+//    PTCON2 = 0x0000; // 1:1 pre-scaler
+    PTCON2 = 0x0001; // 2:1 pre-scaler
+//    PTCON2 = 0x0010; // 4:1 pre-scaler
+//    PTCON2 = 0x0011; // 8:1 pre-scaler
 
     // Set up trigger compare for interrupt on period.
   	TRIG1 = 0x0010;
