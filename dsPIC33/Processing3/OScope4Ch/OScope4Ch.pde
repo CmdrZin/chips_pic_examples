@@ -40,6 +40,7 @@ void setup() {
   {
     vscale[i] = 0.3;                  // Default. Set through UI.
   }
+  vscale[0] = 1.0;                  // Default. Set through UI.
 
   // Setup Serial I/O
   setupSerial();

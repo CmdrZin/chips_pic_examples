@@ -87,12 +87,16 @@ int16_t main(void) {
 
 /* Archive old test code here. */
 // ADC tests.. pass in configuration
-void test002(USER_ADC_CONF conf)
-{
+void test002(USER_ADC_CONF conf) {
     char strOut[32];
 //    bool tog = false;
     int strLen;
-
+    
+    char binOut[10];
+    int binIndex;
+    int i;
+    int k;
+    
     AD1CON1bits.SAMP = 1; // Start sampling
     IFS0bits.AD1IF = 0;  //After conversion, ADxIF is set to 1 and must be cleared.
 
@@ -134,12 +138,22 @@ void test002(USER_ADC_CONF conf)
 //                setLed(true);                              // TIMING TEST
 
             // Dump buffer to serial.
-              if( adcCount == sizeof(ADC)) {
+                // Use 8bit for Four channel.
+            if( adcCount == sizeof(ADC)) {
+                  // Buffer is FULL.
 //                strLen = sprintf(strOut, "%03u %03u %03u %03u \n", (uint8_t)ADC[0],(uint8_t)ADC[1],(uint8_t)ADC[2],(uint8_t)ADC[3]);
-                strLen = sprintf(strOut, "%02x %02x %02x %02x \n", (uint8_t)ADC[0],(uint8_t)ADC[1],(uint8_t)ADC[2],(uint8_t)ADC[3]);
-                writeBuff(strOut, strLen);
-                adcCount = 0;
-
+//                strLen = sprintf(strOut, "%02x %02x %02x %02x \n", (uint8_t)ADC[0],(uint8_t)ADC[1],(uint8_t)ADC[2],(uint8_t)ADC[3]);
+//                writeBuff(strOut, strLen);
+                  binIndex = 0;
+                  binOut[0] = 0xAA;
+                  binOut[1] = 0x55;
+                  for(i=0; i<512; i++) {
+                      for(k=2; k<6; k++) {
+                          binOut[k] = ADC[binIndex++];
+                      }
+                      writeBuff(binOut, 6);
+                  }
+                  adcCount = 0;       // Signal that the buffer is EMPTY.
                 // Time sample rate.
                 // 5us -> 200KHz per channel x4 channels -> 800KHz total rate.
 //                if (tog) {
@@ -148,7 +162,7 @@ void test002(USER_ADC_CONF conf)
 //                    setLed(false);
 //                }
 //                tog = !tog;
-              }
+            }
 
 #endif
 //            ADC[0] = ADC1BUF0; // Read the ADC conversion result

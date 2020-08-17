@@ -21,6 +21,27 @@ PFont mono;
 
 boolean kFlag = false;            // keeps from processing same key twice.
 
+final int S_IDLE = 0;
+final int S_SYNC = 1;
+final int S_READ4CH = 2;
+final int S_READ1CH = 3;
+final int S_NEWDUMP = 4;
+int sState = S_IDLE;
+
+final int OPTNEW = 0x50;
+final int OPTCH1 = 0x51;
+final int OPTCH2 = 0x52;
+final int OPTCH3 = 0x53;
+final int OPTCH4 = 0x54;
+final int OPT4CH = 0x55;
+
+int sByteCount = 0;
+final int BYTES4CH = 6;
+final int BYTES1CH = 4;
+
+int vChannel;
+int vData;
+
 void setupSerial() {
   mono = createFont("Arial", 12);
   textSize(12);
@@ -84,29 +105,71 @@ void keyReleased()
 
 /*
  * Called each time a char received at serial port.
+ * New SYNC Format: AA 50          2 8bit binary bytes. New buffer dump.
+ * New Binary Format (Four Chanel): AA 55 Ch0 Ch1 Ch2 Ch3    6 8bit binary bytes
  */
 void serialEvent(Serial myPort) {
   // read a byte from the serial port:
   char inByte = (char)myPort.read();
-  // Add the latest byte from the serial port to array:
-  if( serialCount < MAX_IN_CHAR ) {
-    serialInArray[serialCount] = inByte;
-    serialCount++;
-  } else {
-    // Force termination.
-    inByte = '\n';
-  }
-
-  if (inByte == '\n') {
-    String sOut = new String(subset(serialInArray, 0, serialCount-1));   // strip \n
-    // print the last value (for debugging purposes only):
-//    println(hex(inByte));
-    eListBox[eListBoxCount] = sOut;
-    if (++eListBoxCount >= MAX_TEXT_LINES) {
-      eListBoxCount = 0;
-    }
-
-    // Reset serialCount:
-    serialCount = 0;
+  int i;
+  
+  // Serial In State Machine
+  switch(sState) {
+    case S_IDLE:
+    // Waiting for SYNC character
+      if( inByte == 0xAA ) {
+        // First SYNC found
+        sState = S_SYNC;
+      }
+      // Ignore all characters until SYNC.
+      break;
+        
+    case S_SYNC:
+    // Waiting for Option character
+      switch(inByte) {
+        case OPTNEW:
+          // New Buffer Dump
+          vChannel = 0;          // 0-3
+          vData = 0;             // 0-499 four channel (interpolated) or 0-999 one channel
+          sState = S_IDLE;
+          break;
+          
+        case OPT4CH:
+          // Four Channel data.
+          sState = S_READ4CH;
+          sByteCount = 0;
+          break;
+          
+        default:
+          sState = S_IDLE;
+          break;
+      }
+      break;
+      
+    case S_READ4CH:
+      serialInArray[sByteCount++] = inByte;
+      if( sByteCount >= BYTES4CH ) {
+        // All four channels read. Put data into display buffer.
+        for(i=0; i<4; i++) {
+          vpoint[i][vData] = serialInArray[i];
+          // TODO: Add interpolation to fill 2 points.
+          if(vData > 1) {
+            vpoint[i][vData-1] = (vpoint[i][vData-2] + vpoint[i][vData])>>1;    // average 
+          }
+          
+        }
+        ++vData;      // for the interpolation.
+        ++vData;      // for the next point.
+        // Check for maximum size of vpoint buffer.
+        if(vData >= 1000) {
+          vData = 998;
+        }
+        sState = S_IDLE;        // Look for next data block of four channels.
+      }
+      break;
+      
+    default:
+      sState = S_IDLE;
+      break;
   }
 }

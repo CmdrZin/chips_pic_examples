@@ -138,6 +138,7 @@
 extern volatile char ADC[2048];    // ADC 10 bit data. Modified in interrupt.
 extern volatile int adcCount;      // FULL if => 2047. Use as index into ADC.
 
+bool intrTog = false;
 
 /* Add interrupt routine code here. */
 void __attribute__((interrupt,auto_psv)) _AD1Interrupt(void) {
@@ -163,5 +164,16 @@ void __attribute__((interrupt,auto_psv)) _AD1Interrupt(void) {
 #endif
     }
 #endif
+
+#if 1
+    // Timing Test
+    if(intrTog) {
+        setLed(true);
+    } else {
+        setLed(false);
+    }
+    intrTog = !intrTog;
+#endif
+    
     IFS0bits.AD1IF = 0;  //After conversion, ADxIF is set to 1 and must be cleared.
 }

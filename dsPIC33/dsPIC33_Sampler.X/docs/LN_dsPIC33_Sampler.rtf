@@ -157,12 +157,19 @@ OpAmps clip at 2v. DC Bias is at 1.615v. Reduce signal. Audio still works. Snash
 15jul20\par
 Project rev 341. \par
 Modify dsPIC + Processing3 O-display to show serial data.\par
-1. Change serial format to add sync 0xAA 0x55 before data. Change data to be 16 bit.\par
-New format: AA 55 Ch0H Ch0L Ch1H Ch1L Ch2H Ch2L Ch3H Ch3L 0A\tab 11 bytes with '\\n' terminator.\par
+1. Change serial format to add sync 0xAA 0x55 before data. Change data to be 16 bit. Modify Processing3 to accept.\par
+Four channel is 8bit. One channel is 12bit.\par
+\strike New format: AA 55 Ch0H Ch0L Ch1H Ch1L Ch2H Ch2L Ch3H Ch3L 0A\tab 11 bytes with '\\n' terminator.\strike0\par
+New SYNC Format: AA 50\tab\tab\tab\tab\tab 2 8bit binary bytes. New buffer dump.\par
+New Binary Format (Four Chanel): AA 55 Ch0 Ch1 Ch2 Ch3\tab 6 8bit binary bytes\par
+DSP side done..Looks ok on scope.\par
+Do Processing3 side..\par
+\par
+New Binary Format (One Chanel): AA 5N ChNH ChNL\tab\tab 4 12bit binary bytes. N = Chan\par
+\par
+\par
 Dump entire buffer every 2k samples.\par
 Add a zero, F8 to 08, crossing trigger to start collection.\par
-\par
-\par
 \par
 2. Copy ..\\Software\\Processing3\\OScope code to ..\\Processing3\\OScope4Ch and add in code from SerialTest002 then \par
 modify to accept new format.\par

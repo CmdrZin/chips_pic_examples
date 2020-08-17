@@ -99,10 +99,12 @@ void InitApp(USER_ADC_CONF config) {
 #else
         // Auto sample and convert
         AD1CON1 = 0x00EC; // ADON:OFF, ADSIDL:Cont, ADDMABM:DMA Scat/Gat, AD12B:10bit, FORM:UINT_RJ,
-        // SSRC:AUTO, SSRCG:0, SIMSAM:Simul, ASAM:OnConv, SAMP:HOLD, DONE:status
+        // SSRC<2:0>AUTO(111), SSRCG:0, SIMSAM:Simul, ASAM:OnConv, SAMP:HOLD, DONE:status
 //        AD1CON2 = 0x0300; // VCFG:AVdd:AVss, CSCNA:OFF, CHPS:CH0-3, BUFS:status, SMPI:Int on done., BUFM:TOP, ALTS:MUXA
         AD1CON2 = 0x0200; // VCFG:AVdd:AVss, CSCNA:OFF, CHPS:CH0-3, BUFS:status, SMPI:N-1(3), BUFM:TOP, ALTS:MUXA
-        AD1CON3 = 0x050F; // ADRC:SYSCLK, SAMC:Tad=5 3, ADCS:Tp*15 5
+        // Tad = 1/60MHz(16.7ns) * (ADCS<7:0> +1)..min 76ns..use 5 for 83ns
+        // Tp = Sample time..min 4 Tad..2 for ANx..use 3
+        AD1CON3 = 0x0304; // ADRC:SYSCLK, SAMC:Tad=5, ADCS:Tp*(4+1)
         AD1CON4 = 0x0000; // ADDMAEN:OFF, DMABL:1per
         AD1CHS123 = 0x0000; // CH123NB:VrefL, CH123SB:OA2/AN0.AN1.AN2, CH123NA:VrefL, CH123SA:OA2/AN0.AN1.AN2
         AD1CHS0 = 0x0303; // Input Ch 0 Select: CH0NB:VrefL, CH0SB:na, CH0NA:VrefL, CH0SA:AN3
